@@ -11,6 +11,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "renderer/Sphere.h"
 #include "renderer/BeamParticles.h"
+#include "audio/PulseAudio.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -90,8 +91,11 @@ int main(void) {
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 410");
 
+    PulseAudio audio;
+    audio.init();
+
     // spin axis, tilt (degrees), period (seconds), period derivative
-    Pulsar pulsar(glm::vec3(0, 1, 0), 3.0f, 0.2, 1e-15, 1e10);
+    Pulsar pulsar(glm::vec3(0, 1, 0), 3.0f, 0.1, 1e-15, 1e10);
     // Sphere for the star
     Sphere star(0.12f, 24);
     // length, maxRadius, particle count, bend amount
@@ -101,6 +105,8 @@ int main(void) {
     Shader particleShader("src/shaders/particle.vert", "src/shaders/particle.frag");
 
     auto lastTime = std::chrono::high_resolution_clock::now();
+
+    float prevPhase = 0.0f; // AUDIO: used to detect one full rotation
 
     while (!glfwWindowShouldClose(window)) {
         auto currentTime = std::chrono::high_resolution_clock::now();
@@ -117,6 +123,13 @@ int main(void) {
         glm::vec3 beamDir = glm::normalize(beam);
         float alignment = glm::max(glm::dot(beamDir, toObserver), glm::dot(-beamDir, toObserver));
         float pulseFactor = glm::pow(glm::max(alignment, 0.0f), 20.0f);
+
+        // AUDIO: tick once per rotation (phase wraps back to 0), from any camera angle.
+        // Quiet in the background, louder when a beam points toward the camera.
+        float phase = pulsar.getPhase();
+        if (phase < prevPhase)
+            audio.trigger(0.35f + 0.65f * pulseFactor);
+        prevPhase = phase;
 
         glClearColor(0.02f, 0.02f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -199,6 +212,8 @@ int main(void) {
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    audio.shutdown();
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();

@@ -36,6 +36,9 @@ target_link_libraries(imgui PUBLIC glfw)
 add_executable(PulsarSim ${SOURCES})
 
 # Set include directories for the executable
-target_include_directories(PulsarSim PUBLIC src external/glad/include)
+target_include_directories(PulsarSim PUBLIC src external/glad/include external/miniaudio)
+if(APPLE)
+    target_link_libraries(PulsarSim "-framework CoreFoundation" "-framework CoreAudio" "-framework AudioToolbox")
+endif()
 # Link the libraries to the executable
 target_link_libraries(PulsarSim glfw glad imgui OpenGL::GL glm::glm)
