@@ -21,15 +21,13 @@ void Pulsar::update(float dt) {
 }
 
 glm::vec3 Pulsar::getBeamDirection() const {
-    // To find the beam direction, we need to rotate the spin axis by the tilt angle and then by the current phase.
     glm::vec3 arbitrary = (fabs(spinAxis.x) < 0.9f) ? glm::vec3(1, 0, 0) : glm::vec3(0, 1, 0);
-    glm::vec3 perpendicular = glm::normalize(glm::cross(spinAxis, arbitrary));
+    glm::vec3 referencePerp = glm::normalize(glm::cross(spinAxis, arbitrary));
 
-    // Now we have a perpendicular vector to the spin axis. We can rotate this vector by the tilt angle around the tilt axis (which is perpendicular to both the spin axis and the perpendicular vector).
-    glm::vec3 tiltAxis = glm::normalize(glm::cross(spinAxis, perpendicular));
-    glm::vec3 tilted = glm::rotate(perpendicular, tiltAngle, tiltAxis);
+    // Start from the spin axis itself, tilt it away by tiltAngle (not the other way around)
+    glm::vec3 tilted = glm::rotate(spinAxis, tiltAngle, referencePerp);
 
-    // Finally, we rotate the tilted vector by the current phase around the spin axis to get the final beam direction.
+    // Spin that tilted vector around spinAxis by the current phase
     glm::vec3 beam = glm::rotate(tilted, currentPhase, spinAxis);
 
     return glm::normalize(beam);
