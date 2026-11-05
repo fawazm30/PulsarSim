@@ -7,6 +7,7 @@
 #include "Shader.h"
 #include "renderer/Camera.hpp"
 #include <glm/gtc/type_ptr.hpp>
+#include "renderer/Sphere.h"
 
 // Error callback function for GLFW
 static void error_callback(int error, const char* description)
@@ -73,6 +74,8 @@ int main(void) {
 
     // Create a pulsar: spin axis pointing up, 30° tilt, 1 second period, slow spin-down
     Pulsar pulsar(glm::vec3(0, 1, 0), 30.0f, 1.0f, 1e-9f);
+    // Create a sphere to represent the pulsar
+    Sphere star(0.15f, 24);
 
     auto lastTime = std::chrono::high_resolution_clock::now();
 
@@ -115,6 +118,7 @@ int main(void) {
         glm::mat4 projection = camera.getProjection((float)w / h);
         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+        star.draw();
         glBindVertexArray(VAO);
         glDrawArrays(GL_LINES, 0, 2);
 
