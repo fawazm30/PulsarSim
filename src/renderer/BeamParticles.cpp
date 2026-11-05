@@ -6,19 +6,26 @@
 
 static float randf() { return (float)rand() / RAND_MAX; }
 
-BeamParticles::BeamParticles(float length, float maxRadius, int count) {
-    std::vector<float> data; // x, y, z, t (0=near star, 1=tip)
+BeamParticles::BeamParticles(float length, float maxRadius, int count, float bendAmount) {
+    std::vector<float> data; // x, y, z, t
     vertexCount = count;
 
     for (int i = 0; i < count; i++) {
         float t = randf();
-        float radius = maxRadius * t * t; // spreads out more near the tip
+        float radius = maxRadius * t * t;
         float theta = randf() * 2.0f * M_PI;
         float r = radius * sqrt(randf());
 
-        data.push_back(r * cos(theta));
-        data.push_back(t * length);
-        data.push_back(r * sin(theta));
+        float x = r * cos(theta);
+        float z = r * sin(theta);
+        float y = t * length;
+
+        // Bend increases with distance from the star, like a curved field line
+        x += bendAmount * t * t;
+
+        data.push_back(x);
+        data.push_back(y);
+        data.push_back(z);
         data.push_back(t);
     }
 

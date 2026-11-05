@@ -2,7 +2,7 @@
 
 class BeamParticles {
 public:
-    BeamParticles(float length, float maxRadius, int count);
+    BeamParticles(float length, float maxRadius, int count, float bendAmount);
     void draw() const;
 
 private:

@@ -10,6 +10,8 @@ public:
 
     float getPeriod() const { return period; }
     float getPhase() const { return currentPhase; }
+    glm::vec3 getSpinAxis() const { return spinAxis; }
+    float getTiltAngle() const { return tiltAngle; }
 
 private:
     glm::vec3 spinAxis;

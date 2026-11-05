@@ -80,9 +80,9 @@ int main(void) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-    Pulsar pulsar(glm::vec3(0, 1, 0), 10.0f, 0.3f, 1e-9f);
+    Pulsar pulsar(glm::vec3(0, 1, 0), 3.0f, 0.2f, 1e-9f);
     Sphere star(0.12f, 24);
-    BeamParticles beamParticles(4.0f, 0.25f, 2000);
+    BeamParticles beamParticles(3.0f, 0.25f, 1500, 0.0f);
 
     Shader shader("src/shaders/basic.vert", "src/shaders/basic.frag");
     Shader particleShader("src/shaders/particle.vert", "src/shaders/particle.frag");
@@ -130,13 +130,15 @@ int main(void) {
         glUniformMatrix4fv(glGetUniformLocation(particleShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
         glUniform3f(glGetUniformLocation(particleShader.ID, "particleColor"), 0.8f, 0.9f, 1.0f);
 
-        glm::vec3 up(0.0f, 1.0f, 0.0f);
-        glm::vec3 axis = glm::cross(up, beam);
-        float angle = acos(glm::clamp(glm::dot(up, beam), -1.0f, 1.0f));
+        glm::vec3 spinAxis = pulsar.getSpinAxis();
+        float tiltAngle = pulsar.getTiltAngle();
 
-        glm::mat4 model = glm::mat4(1.0f);
-        if (glm::length(axis) > 0.0001f)
-            model = glm::rotate(glm::mat4(1.0f), angle, glm::normalize(axis));
+        glm::vec3 arbitrary = (fabs(spinAxis.x) < 0.9f) ? glm::vec3(1, 0, 0) : glm::vec3(0, 1, 0);
+        glm::vec3 referencePerp = glm::normalize(glm::cross(spinAxis, arbitrary));
+
+        glm::mat4 tiltMat = glm::rotate(glm::mat4(1.0f), tiltAngle, referencePerp);
+        glm::mat4 phaseMat = glm::rotate(glm::mat4(1.0f), pulsar.getPhase(), spinAxis);
+        glm::mat4 model = phaseMat * tiltMat;
 
         glUniformMatrix4fv(glGetUniformLocation(particleShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
         beamParticles.draw();
