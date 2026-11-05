@@ -15,4 +15,5 @@ public:
     glm::mat4 getProjection(float aspectRatio); // Get the projection matrix using perspective projection
     void orbit(float dx, float dy); // Update yaw and pitch based on mouse movement to orbit around the center
     void zoom(float delta); // Update the distance from the center based on scroll input to zoom in and out
+    glm::vec3 getPosition(); // Get the camera's position in Cartesian coordinates based on yaw, pitch, and distance
 };

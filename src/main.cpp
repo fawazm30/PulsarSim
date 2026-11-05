@@ -78,11 +78,14 @@ int main(void) {
 
     glEnable(GL_PROGRAM_POINT_SIZE);
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE); // additive blending
 
+    // spin axis, tilt (degrees), period (seconds), period derivative
     Pulsar pulsar(glm::vec3(0, 1, 0), 3.0f, 0.2f, 1e-9f);
+    // Sphere for the star
     Sphere star(0.12f, 24);
-    BeamParticles beamParticles(3.0f, 0.25f, 1500, 0.0f);
+    // length, maxRadius, particle count, bend amount
+    BeamParticles beamParticles(3.0f, 0.25f, 1500, 0.10f);
 
     Shader shader("src/shaders/basic.vert", "src/shaders/basic.frag");
     Shader particleShader("src/shaders/particle.vert", "src/shaders/particle.frag");
@@ -97,6 +100,15 @@ int main(void) {
         pulsar.update(dt);
         glm::vec3 beam = pulsar.getBeamDirection();
 
+        // Make particles flow outward along the beam
+        beamParticles.update(dt, 0.4f); // flow speed
+
+        // Pulse: spikes when either beam points toward the camera
+        glm::vec3 toObserver = glm::normalize(camera.getPosition());
+        glm::vec3 beamDir = glm::normalize(beam);
+        float alignment = glm::max(glm::dot(beamDir, toObserver), glm::dot(-beamDir, toObserver));
+        float pulseFactor = glm::pow(glm::max(alignment, 0.0f), 20.0f);
+
         glClearColor(0.02f, 0.02f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -105,7 +117,7 @@ int main(void) {
         glm::mat4 view = camera.getView();
         glm::mat4 projection = camera.getProjection((float)w / h);
 
-        // --- Star: bright white core, then a larger translucent blue halo ---
+        // --- Star: white core + pulsing blue halo ---
         shader.use();
         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
@@ -117,10 +129,13 @@ int main(void) {
         glUniform1f(glGetUniformLocation(shader.ID, "falloffRadius"), 0.0f);
         star.draw();
 
-        glm::mat4 haloModel = glm::scale(glm::mat4(1.0f), glm::vec3(2.5f));
+        float haloAlpha = 0.15f + pulseFactor * 0.6f;
+        float haloScale = 2.5f + pulseFactor * 2.0f;
+
+        glm::mat4 haloModel = glm::scale(glm::mat4(1.0f), glm::vec3(haloScale));
         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(haloModel));
         glUniform3f(glGetUniformLocation(shader.ID, "objectColor"), 0.3f, 0.6f, 1.0f);
-        glUniform1f(glGetUniformLocation(shader.ID, "alpha"), 0.15f);
+        glUniform1f(glGetUniformLocation(shader.ID, "alpha"), haloAlpha);
         glUniform1f(glGetUniformLocation(shader.ID, "falloffRadius"), 0.12f);
         star.draw();
 
@@ -130,6 +145,7 @@ int main(void) {
         glUniformMatrix4fv(glGetUniformLocation(particleShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
         glUniform3f(glGetUniformLocation(particleShader.ID, "particleColor"), 0.8f, 0.9f, 1.0f);
 
+        // Same construction as Pulsar::getBeamDirection(): tilt first, then spin by phase
         glm::vec3 spinAxis = pulsar.getSpinAxis();
         float tiltAngle = pulsar.getTiltAngle();
 

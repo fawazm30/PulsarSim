@@ -35,3 +35,10 @@ void Camera::zoom(float delta) {
     if(distance < 1.0f) distance = 1.0f; // Prevent zooming too close
     if(distance > 100.0f) distance = 100.0f; // Prevent zooming too far
 }
+
+glm::vec3 Camera::getPosition() {
+    float x = distance * cos(glm::radians(pitch)) * cos(glm::radians(yaw));
+    float y = distance * sin(glm::radians(pitch));
+    float z = distance * cos(glm::radians(pitch)) * sin(glm::radians(yaw));
+    return glm::vec3(x, y, z);
+}
