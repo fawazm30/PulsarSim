@@ -1,4 +1,0 @@
-/Users/fawaz/PulsarSim/build/CMakeFiles/glad.dir
-/Users/fawaz/PulsarSim/build/CMakeFiles/PulsarSim.dir
-/Users/fawaz/PulsarSim/build/CMakeFiles/edit_cache.dir
-/Users/fawaz/PulsarSim/build/CMakeFiles/rebuild_cache.dir
