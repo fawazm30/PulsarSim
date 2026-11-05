@@ -1,4 +1,6 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/PulsarSim.dir/src/Pulsar.cpp.o"
+  "CMakeFiles/PulsarSim.dir/src/Pulsar.cpp.o.d"
   "CMakeFiles/PulsarSim.dir/src/main.cpp.o"
   "CMakeFiles/PulsarSim.dir/src/main.cpp.o.d"
   "PulsarSim"

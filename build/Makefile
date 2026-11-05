@@ -166,6 +166,30 @@ external/glad/src/glad.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/glad.dir/build.make CMakeFiles/glad.dir/external/glad/src/glad.c.s
 .PHONY : external/glad/src/glad.c.s
 
+src/Pulsar.o: src/Pulsar.cpp.o
+.PHONY : src/Pulsar.o
+
+# target to build an object file
+src/Pulsar.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/PulsarSim.dir/build.make CMakeFiles/PulsarSim.dir/src/Pulsar.cpp.o
+.PHONY : src/Pulsar.cpp.o
+
+src/Pulsar.i: src/Pulsar.cpp.i
+.PHONY : src/Pulsar.i
+
+# target to preprocess a source file
+src/Pulsar.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/PulsarSim.dir/build.make CMakeFiles/PulsarSim.dir/src/Pulsar.cpp.i
+.PHONY : src/Pulsar.cpp.i
+
+src/Pulsar.s: src/Pulsar.cpp.s
+.PHONY : src/Pulsar.s
+
+# target to generate assembly for a file
+src/Pulsar.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/PulsarSim.dir/build.make CMakeFiles/PulsarSim.dir/src/Pulsar.cpp.s
+.PHONY : src/Pulsar.cpp.s
+
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
 
@@ -203,6 +227,9 @@ help:
 	@echo "... external/glad/src/glad.o"
 	@echo "... external/glad/src/glad.i"
 	@echo "... external/glad/src/glad.s"
+	@echo "... src/Pulsar.o"
+	@echo "... src/Pulsar.i"
+	@echo "... src/Pulsar.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"

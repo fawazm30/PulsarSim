@@ -88,7 +88,7 @@ clean: CMakeFiles/PulsarSim.dir/clean
 CMakeFiles/glad.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/glad.dir/build.make CMakeFiles/glad.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/glad.dir/build.make CMakeFiles/glad.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/fawaz/PulsarSim/build/CMakeFiles --progress-num=3,4 "Built target glad"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/fawaz/PulsarSim/build/CMakeFiles --progress-num=4,5 "Built target glad"
 .PHONY : CMakeFiles/glad.dir/all
 
 # Build rule for subdir invocation for target.
@@ -105,7 +105,7 @@ glad: CMakeFiles/glad.dir/rule
 # codegen rule for target.
 CMakeFiles/glad.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/glad.dir/build.make CMakeFiles/glad.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/fawaz/PulsarSim/build/CMakeFiles --progress-num=3,4 "Finished codegen for target glad"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/fawaz/PulsarSim/build/CMakeFiles --progress-num=4,5 "Finished codegen for target glad"
 .PHONY : CMakeFiles/glad.dir/codegen
 
 # clean rule for target.
@@ -120,12 +120,12 @@ CMakeFiles/glad.dir/clean:
 CMakeFiles/PulsarSim.dir/all: CMakeFiles/glad.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/PulsarSim.dir/build.make CMakeFiles/PulsarSim.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/PulsarSim.dir/build.make CMakeFiles/PulsarSim.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/fawaz/PulsarSim/build/CMakeFiles --progress-num=1,2 "Built target PulsarSim"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/fawaz/PulsarSim/build/CMakeFiles --progress-num=1,2,3 "Built target PulsarSim"
 .PHONY : CMakeFiles/PulsarSim.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/PulsarSim.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/fawaz/PulsarSim/build/CMakeFiles 4
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/fawaz/PulsarSim/build/CMakeFiles 5
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/PulsarSim.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /Users/fawaz/PulsarSim/build/CMakeFiles 0
 .PHONY : CMakeFiles/PulsarSim.dir/rule
@@ -137,7 +137,7 @@ PulsarSim: CMakeFiles/PulsarSim.dir/rule
 # codegen rule for target.
 CMakeFiles/PulsarSim.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/PulsarSim.dir/build.make CMakeFiles/PulsarSim.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/fawaz/PulsarSim/build/CMakeFiles --progress-num=1,2 "Finished codegen for target PulsarSim"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/fawaz/PulsarSim/build/CMakeFiles --progress-num=1,2,3 "Finished codegen for target PulsarSim"
 .PHONY : CMakeFiles/PulsarSim.dir/codegen
 
 # clean rule for target.
