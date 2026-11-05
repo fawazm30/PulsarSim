@@ -21,10 +21,21 @@ target_include_directories(glad PUBLIC external/glad/include)
 # Collect all .cpp files under src/ into a variable called SOURCES
 file(GLOB_RECURSE SOURCES src/*.cpp)
 
+# Add ImGui as a static library
+add_library(imgui STATIC
+    external/imgui/imgui.cpp
+    external/imgui/imgui_draw.cpp
+    external/imgui/imgui_tables.cpp
+    external/imgui/imgui_widgets.cpp
+    external/imgui/backends/imgui_impl_glfw.cpp
+    external/imgui/backends/imgui_impl_opengl3.cpp)
+target_include_directories(imgui PUBLIC external/imgui external/imgui/backends)
+target_link_libraries(imgui PUBLIC glfw)
+
 # Create the executable from SOURCES
 add_executable(PulsarSim ${SOURCES})
 
 # Set include directories for the executable
 target_include_directories(PulsarSim PUBLIC src external/glad/include)
 # Link the libraries to the executable
-target_link_libraries(PulsarSim glfw glad OpenGL::GL glm::glm)
+target_link_libraries(PulsarSim glfw glad imgui OpenGL::GL glm::glm)

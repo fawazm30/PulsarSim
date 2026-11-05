@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 #include <iostream>
 #include <chrono>
+#include <cmath>
 #include "Pulsar.h"
 #include "Shader.h"
 #include "renderer/Camera.hpp"
@@ -10,6 +11,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "renderer/Sphere.h"
 #include "renderer/BeamParticles.h"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 Camera camera;
 bool mouseDown = false;
@@ -80,8 +84,14 @@ int main(void) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE); // additive blending
 
+    // Dear ImGui setup (installs its own callbacks and chains ours)
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 410");
+
     // spin axis, tilt (degrees), period (seconds), period derivative
-    Pulsar pulsar(glm::vec3(0, 1, 0), 3.0f, 0.2f, 1e-9f);
+    Pulsar pulsar(glm::vec3(0, 1, 0), 3.0f, 0.2, 1e-15, 1e10);
     // Sphere for the star
     Sphere star(0.12f, 24);
     // length, maxRadius, particle count, bend amount
@@ -100,7 +110,6 @@ int main(void) {
         pulsar.update(dt);
         glm::vec3 beam = pulsar.getBeamDirection();
 
-        // Make particles flow outward along the beam
         beamParticles.update(dt, 0.4f); // flow speed
 
         // Pulse: spikes when either beam points toward the camera
@@ -163,9 +172,37 @@ int main(void) {
         glUniformMatrix4fv(glGetUniformLocation(particleShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(modelOpposite));
         beamParticles.draw();
 
+        // --- HUD ---
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        double P = pulsar.getPeriod();                // seconds
+        double Pdot = pulsar.getPeriodDerivative();   // dimensionless (s/s)
+
+        double freq = 1.0 / P;                          // Hz
+        double B = 3.2e19 * std::sqrt(P * Pdot);        // surface magnetic field, gauss
+        double ageYears = (P / (2.0 * Pdot)) / 3.15e7;  // characteristic age, years
+
+        ImGui::Begin("Pulsar Data");
+        ImGui::Text("Period:         %.6f s", P);
+        ImGui::Text("Frequency:      %.3f Hz", freq);
+        ImGui::Text("Period rate:    %.3e s/s", Pdot);
+        ImGui::Text("Magnetic field: %.3e G", B);
+        ImGui::Text("Char. age:      %.3e yr", ageYears);
+        ImGui::Text("Pulse:          %.2f", pulseFactor);
+        ImGui::End();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     glfwDestroyWindow(window);
     glfwTerminate();
