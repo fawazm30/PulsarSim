@@ -106,7 +106,15 @@ int main(void) {
 
     auto lastTime = std::chrono::high_resolution_clock::now();
 
-    float prevPhase = 0.0f; // AUDIO: used to detect one full rotation
+    float prevPhase = 0.0f; // used to detect one full rotation (audio tick)
+
+    // LIGHT CURVE: ring buffer of brightness samples, sampled at 1000 Hz
+    const int kSamples = 600;           // 0.6 s of history
+    float lightCurve[kSamples] = {0};
+    int lightOffset = 0;                // next slot to write
+    float sampleAcc = 0.0f;             // leftover time since the last sample
+    const float sampleDt = 0.001f;      // seconds between samples
+    const float beamWidth = 0.02f;      // angular width of the beam in radians (tweak: bigger = wider pulse)
 
     while (!glfwWindowShouldClose(window)) {
         auto currentTime = std::chrono::high_resolution_clock::now();
@@ -118,13 +126,33 @@ int main(void) {
 
         beamParticles.update(dt, 0.4f); // flow speed
 
+        // LIGHT CURVE: fill in samples for this frame.
+        // Earth sits where the beam passes at phase 0, so the dot product
+        // between beam and Earth is cos^2(a) + sin^2(a) * cos(phase).
+        {
+            float a = pulsar.getTiltAngle();
+            float c2 = std::cos(a) * std::cos(a);
+            float s2 = std::sin(a) * std::sin(a);
+            float omega = (float)(2.0 * M_PI / pulsar.getPeriod()); // rad/s
+
+            sampleAcc += dt;
+            if (sampleAcc > 0.1f) sampleAcc = 0.1f; // safety cap if a frame stalls
+            while (sampleAcc >= sampleDt) {
+                sampleAcc -= sampleDt;
+                float phi = pulsar.getPhase() - omega * sampleAcc; // phase at that sample's moment
+                float d = c2 + s2 * std::cos(phi);
+                lightCurve[lightOffset] = std::exp(-(1.0f - d) / (beamWidth * beamWidth));
+                lightOffset = (lightOffset + 1) % kSamples;
+            }
+        }
+
         // Pulse: spikes when either beam points toward the camera
         glm::vec3 toObserver = glm::normalize(camera.getPosition());
         glm::vec3 beamDir = glm::normalize(beam);
         float alignment = glm::max(glm::dot(beamDir, toObserver), glm::dot(-beamDir, toObserver));
         float pulseFactor = glm::pow(glm::max(alignment, 0.0f), 20.0f);
 
-        // AUDIO: tick once per rotation (phase wraps back to 0), from any camera angle.
+        // Tick once per rotation (phase wraps back to 0), from any camera angle.
         // Quiet in the background, louder when a beam points toward the camera.
         float phase = pulsar.getPhase();
         if (phase < prevPhase)
@@ -204,6 +232,11 @@ int main(void) {
         ImGui::Text("Magnetic field: %.3e G", B);
         ImGui::Text("Char. age:      %.3e yr", ageYears);
         ImGui::Text("Pulse:          %.2f", pulseFactor);
+        ImGui::Separator();
+        // LIGHT CURVE: brightness seen from Earth over the last 0.6 s
+        ImGui::Text("Light curve (Earth view)");
+        ImGui::PlotLines("##lightcurve", lightCurve, kSamples, lightOffset,
+                         nullptr, 0.0f, 1.0f, ImVec2(320, 80));
         ImGui::End();
 
         ImGui::Render();
