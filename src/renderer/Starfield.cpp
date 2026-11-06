@@ -1,11 +1,16 @@
+// Starfield.cpp
+// Generates star positions, brightness, size and twinkle phase, stored in one GPU buffer.
+
 #include "Starfield.h"
 #include <glad/glad.h>
 #include <vector>
 #include <cstdlib>
 #include <cmath>
 
+// Random float in [0, 1]
 static float randf() { return (float)rand() / (float)RAND_MAX; }
 
+// Scatter stars uniformly over a sphere of radius 10, mostly faint with a few bright ones
 Starfield::Starfield(int count) : vertexCount(count) {
     std::vector<float> data;
     data.reserve(count * 6);
@@ -47,6 +52,7 @@ Starfield::Starfield(int count) : vertexCount(count) {
     glEnableVertexAttribArray(3);
 }
 
+// Draw all stars as points
 void Starfield::draw() const {
     glBindVertexArray(VAO);
     glDrawArrays(GL_POINTS, 0, vertexCount);

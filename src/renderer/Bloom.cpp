@@ -1,3 +1,7 @@
+// Bloom.cpp
+// Implements the bloom passes: bright-pass extract, ping-pong Gaussian blur at
+// half resolution, then composite of scene + glow onto the screen.
+
 #include "Bloom.h"
 #include <glad/glad.h>
 #include <algorithm>
@@ -21,11 +25,13 @@ static void makeTarget(int w, int h, unsigned int& fbo, unsigned int& tex) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+// Bind a texture to the given texture unit
 static void bindTex(unsigned int unit, unsigned int tex) {
     glActiveTexture(GL_TEXTURE0 + unit);
     glBindTexture(GL_TEXTURE_2D, tex);
 }
 
+// Load the three bloom shaders and create the off-screen buffers
 Bloom::Bloom(int w, int h)
     : width(w), height(h),
       extractShader("src/shaders/fullscreen.vert", "src/shaders/bloom_extract.frag"),
@@ -36,11 +42,13 @@ Bloom::Bloom(int w, int h)
     createTargets();
 }
 
+// Release all framebuffers, textures and the VAO
 Bloom::~Bloom() {
     destroyTargets();
     glDeleteVertexArrays(1, &quadVAO);
 }
 
+// Full-size scene target plus two half-size targets for the blur
 void Bloom::createTargets() {
     makeTarget(width, height, sceneFBO, sceneTex);
     int hw = std::max(1, width / 2), hh = std::max(1, height / 2); // glow runs at half resolution
@@ -48,6 +56,7 @@ void Bloom::createTargets() {
     makeTarget(hw, hh, pingFBO[1], pingTex[1]);
 }
 
+// Delete the scene and blur framebuffers and their textures
 void Bloom::destroyTargets() {
     glDeleteFramebuffers(1, &sceneFBO);
     glDeleteTextures(1, &sceneTex);
@@ -55,6 +64,7 @@ void Bloom::destroyTargets() {
     glDeleteTextures(2, pingTex);
 }
 
+// Rebuild the buffers at the new size (no-op if the size hasn't changed)
 void Bloom::resize(int w, int h) {
     if (w == width && h == height) return;
     width = w;
@@ -63,11 +73,13 @@ void Bloom::resize(int w, int h) {
     createTargets();
 }
 
+// Redirect drawing into the off-screen scene texture
 void Bloom::beginScene() {
     glBindFramebuffer(GL_FRAMEBUFFER, sceneFBO);
     glViewport(0, 0, width, height);
 }
 
+// Run extract -> blur -> composite and draw the final image to the screen
 void Bloom::apply(float threshold, float intensity, int blurIterations) {
     int hw = std::max(1, width / 2), hh = std::max(1, height / 2);
 

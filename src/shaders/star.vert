@@ -1,4 +1,6 @@
 #version 410 core
+// star.vert
+// Background starfield: positions each star and computes its twinkle and color tint.
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in float aBrightness;
 layout (location = 2) in float aSize;
@@ -11,6 +13,7 @@ uniform float time;
 out float vBrightness;
 out float vTint;
 
+// Transform the star and pass along its twinkling brightness and tint
 void main() {
     gl_Position = projection * view * vec4(aPos, 1.0);
     // Each star twinkles at its own rate and offset

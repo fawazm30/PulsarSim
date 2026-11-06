@@ -1,10 +1,15 @@
+// BeamParticles.cpp
+// Seeds beam particles at random positions and recomputes their positions each frame.
+
 #include "BeamParticles.h"
 #include <glad/glad.h>
 #include <cstdlib>
 #include <cmath>
 
+// Random float in [0, 1]
 static float randf() { return (float)rand() / (float)RAND_MAX; }
 
+// Give each particle a random angle, radius and starting point, and create the GPU buffer
 BeamParticles::BeamParticles(float length_, float maxRadius_, int count, float bendAmount_)
     : length(length_), maxRadius(maxRadius_), bendAmount(bendAmount_)
 {
@@ -31,6 +36,7 @@ BeamParticles::BeamParticles(float length_, float maxRadius_, int count, float b
     glEnableVertexAttribArray(1);
 }
 
+// Move every particle outward, wrap it back to the star at the tip, and upload the new positions
 void BeamParticles::update(float dt, float speed) {
     for (int i = 0; i < vertexCount; i++) {
         seeds[i].t += dt * speed;
@@ -52,6 +58,7 @@ void BeamParticles::update(float dt, float speed) {
     glBufferSubData(GL_ARRAY_BUFFER, 0, buffer.size() * sizeof(float), buffer.data());
 }
 
+// Draw all particles as points
 void BeamParticles::draw() const {
     glBindVertexArray(VAO);
     glDrawArrays(GL_POINTS, 0, vertexCount);

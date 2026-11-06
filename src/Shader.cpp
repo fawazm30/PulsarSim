@@ -1,3 +1,7 @@
+// Shader.cpp
+// Reads GLSL files from disk, compiles them, and links them into a shader program.
+// Compile and link errors are printed to stderr.
+
 #include "Shader.h"
 #include <fstream>
 #include <sstream>
@@ -20,7 +24,7 @@ static unsigned int compile(unsigned int type, const std::string& src) {
     return shader;
 }
 
-// Shader class implementation
+// Read both shader files, compile them, and link them into one program
 Shader::Shader(const char* vertexPath, const char* fragmentPath) {
     std::ifstream vFile(vertexPath), fFile(fragmentPath);
     std::stringstream vStream, fStream;
@@ -47,6 +51,7 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
     glDeleteShader(fragment);
 }
 
+// Bind this program for the draw calls that follow
 void Shader::use() const {
     glUseProgram(ID);
 }

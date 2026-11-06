@@ -1,8 +1,12 @@
+// Cone.cpp
+// Generates the cone's vertices (apex + base ring) and triangle indices.
+
 #include "Cone.h"
 #include <glad/glad.h>
 #include <vector>
 #include <cmath>
 
+// Build a triangle fan from the apex to a ring of points at the given height
 Cone::Cone(float radius, float height, int segments) {
     std::vector<float> vertices;
     std::vector<unsigned int> indices;
@@ -37,6 +41,7 @@ Cone::Cone(float radius, float height, int segments) {
     glEnableVertexAttribArray(0);
 }
 
+// Draw the cone's triangles
 void Cone::draw() const {
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);

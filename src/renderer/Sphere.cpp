@@ -1,8 +1,11 @@
+// Sphere.cpp
+// Generates a latitude/longitude grid of vertices and the triangles between them.
+
 #include "Sphere.h"
 #include <glad/glad.h>
 #include <cmath>
 
-// Sphere class implementation
+// Build the sphere's vertex grid and index buffer
 Sphere::Sphere(float radius, int segments) {
     // Generate vertices and indices for the sphere
     std::vector<float> vertices;

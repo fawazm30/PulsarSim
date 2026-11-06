@@ -1,10 +1,13 @@
+// Camera.cpp
+// Converts the orbit camera's yaw/pitch/distance into view and projection matrices.
+
 #include "Camera.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <cmath>
 #include <iostream>
 #include <glm/gtc/type_ptr.hpp>
 
-// Calculate the camera's position in Cartesian coordinates based on yaw, pitch, and distance
+// Build a view matrix from the orbit position, looking at the origin
 glm::mat4 Camera::getView() {
     float x = distance * cos(glm::radians(pitch)) * cos(glm::radians(yaw));
     float y = distance * sin(glm::radians(pitch));
@@ -17,10 +20,12 @@ glm::mat4 Camera::getView() {
     return glm::lookAt(cameraPos, target, up);
 }
 
+// 45-degree perspective projection for the given aspect ratio
 glm::mat4 Camera::getProjection(float aspectRatio) {
     return glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 100.0f);
 }
 
+// Rotate around the origin by the mouse movement (degrees)
 void Camera::orbit(float dx, float dy) {
     yaw += dx;
     pitch += dy;
@@ -30,12 +35,14 @@ void Camera::orbit(float dx, float dy) {
     if(pitch < -89.0f) pitch = -89.0f;
 }
 
+// Move closer or farther, clamped to [1, 100]
 void Camera::zoom(float delta) {
     distance += delta;
     if(distance < 1.0f) distance = 1.0f; // Prevent zooming too close
     if(distance > 100.0f) distance = 100.0f; // Prevent zooming too far
 }
 
+// Camera position in world space from yaw, pitch and distance
 glm::vec3 Camera::getPosition() {
     float x = distance * cos(glm::radians(pitch)) * cos(glm::radians(yaw));
     float y = distance * sin(glm::radians(pitch));

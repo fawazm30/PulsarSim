@@ -1,3 +1,7 @@
+// PulseAudio.cpp
+// Pulse tick audio using miniaudio. The main thread requests a tick; the audio
+// thread synthesizes a decaying 140 Hz tone with a burst of noise for the click.
+
 #define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
 #include "PulseAudio.h"
@@ -16,6 +20,7 @@ struct AudioState {
     uint32_t noiseSeed = 12345;
 };
 
+// Audio thread callback: fills the output buffer with the current tick's samples
 static void dataCallback(ma_device* device, void* output, const void*, ma_uint32 frameCount) {
     AudioState* s = static_cast<AudioState*>(device->pUserData);
     float* out = static_cast<float*>(output);
@@ -45,6 +50,7 @@ static void dataCallback(ma_device* device, void* output, const void*, ma_uint32
     }
 }
 
+// Open a mono 48 kHz playback device and start it
 bool PulseAudio::init() {
     state = new AudioState();
 
@@ -71,10 +77,12 @@ bool PulseAudio::init() {
     return true;
 }
 
+// Queue a tick for the audio thread to pick up on its next callback
 void PulseAudio::trigger(float strength) {
     if (state) state->pendingStrength.store(strength);
 }
 
+// Stop the device and free the audio state
 void PulseAudio::shutdown() {
     if (state) {
         ma_device_uninit(&state->device);
@@ -83,6 +91,7 @@ void PulseAudio::shutdown() {
     }
 }
 
+// Make sure the device is released when the object goes away
 PulseAudio::~PulseAudio() {
     shutdown();
 }

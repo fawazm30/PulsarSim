@@ -1,8 +1,11 @@
 #version 410 core
+// star.frag
+// Draws each background star as a soft round dot, tinted between blue-white and warm.
 in float vBrightness;
 in float vTint;
 out vec4 FragColor;
 
+// Round, soft-edged point with the star's tint and brightness
 void main() {
     // Soft round dot instead of a square
     float d = length(gl_PointCoord - vec2(0.5)) * 2.0;
