@@ -12,6 +12,7 @@
 #include "renderer/Sphere.h" // SPHERE
 #include "renderer/BeamParticles.h" // BEAM PARTICLES
 #include "renderer/Starfield.h" // STARS
+#include "renderer/Bloom.h" // BLOOM
 #include "audio/PulseAudio.h" // AUDIO
 #include "imgui.h" // IMGUI
 #include "imgui_impl_glfw.h"
@@ -107,17 +108,24 @@ int main(void) {
     float beamWidth = 0.02f; // light-curve pulse width (radians)
     bool soundOn = true;
     bool showStars = true;
+    bool bloomOn = true;          // bloom effect on/off
+    float bloomThreshold = 0.2f;  // only pixels brighter than this glow
+    float bloomStrength = 0.5f;   // bloom effect strength
+    int bloomSize = 10;            // bloom effect: blur iterations (bigger = wider glow)
 
     // spin axis, tilt (degrees), period (seconds), period derivative, time scale
     Pulsar pulsar(glm::vec3(0, 1, 0), tiltDeg, periodSet, 1e-15, 1e10);
     Sphere star(0.12f, 24);
     // length, maxRadius, particle count, bend amount
-    BeamParticles beamParticles(3.0f, spread, 1500, bend);
+    BeamParticles beamParticles(5.0f, spread, 2500, bend);
     Starfield starfield(3000);
 
     Shader shader("src/shaders/basic.vert", "src/shaders/basic.frag");
     Shader particleShader("src/shaders/particle.vert", "src/shaders/particle.frag");
     Shader starShader("src/shaders/star.vert", "src/shaders/star.frag");
+
+    Bloom bloom(fbWidth, fbHeight);
+    int bloomW = fbWidth, bloomH = fbHeight;
 
     auto lastTime = std::chrono::high_resolution_clock::now();
 
@@ -138,6 +146,11 @@ int main(void) {
         pulsar.update(dt);
         glm::vec3 beam = pulsar.getBeamDirection();
 
+        // Physics: beam opening angle scales as 1/sqrt(period).
+        // 'spread' is the beam width at a 0.2 s period; other periods scale from it.
+        float periodScale = std::sqrt(0.2f / (float)pulsar.getPeriod());
+        beamParticles.setMaxRadius(spread * periodScale);
+
         beamParticles.update(dt, flowSpeed);
 
         // Light curve: fill in samples for this frame.
@@ -155,7 +168,8 @@ int main(void) {
                 sampleAcc -= sampleDt;
                 float phi = pulsar.getPhase() - omega * sampleAcc; // phase at that sample's moment
                 float d = c2 + s2 * std::cos(phi);
-                lightCurve[lightOffset] = std::exp(-(1.0f - d) / (beamWidth * beamWidth));
+                float width = beamWidth * periodScale; // narrower beam at longer periods
+                lightCurve[lightOffset] = std::exp(-(1.0f - d) / (width * width));
                 lightOffset = (lightOffset + 1) % kSamples;
             }
         }
@@ -178,6 +192,25 @@ int main(void) {
 
         int w, h;
         glfwGetFramebufferSize(window, &w, &h);
+
+        // keep the off-screen buffers matched to the window size
+        if (w > 0 && h > 0 && (w != bloomW || h != bloomH)) {
+            bloom.resize(w, h);
+            bloomW = w;
+            bloomH = h;
+        }
+
+        // draw the scene off-screen (if bloom is on), otherwise straight to the screen
+        if (bloomOn) {
+            bloom.beginScene();
+        } else {
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glViewport(0, 0, w, h);
+        }
+
+        glClearColor(0.02f, 0.02f, 0.05f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
         glm::mat4 view = camera.getView();
         glm::mat4 projection = camera.getProjection((float)w / h);
 
@@ -238,6 +271,9 @@ int main(void) {
         glUniformMatrix4fv(glGetUniformLocation(particleShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(modelOpposite));
         beamParticles.draw();
 
+        if (bloomOn)
+            bloom.apply(bloomThreshold, bloomStrength, bloomSize);
+
         // --- HUD ---
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -271,12 +307,15 @@ int main(void) {
                 pulsar.setPeriod(periodSet);
             if (ImGui::SliderFloat("Bend", &bend, 0.0f, 1.5f))
                 beamParticles.setBend(bend);
-            if (ImGui::SliderFloat("Beam spread", &spread, 0.02f, 0.6f))
-                beamParticles.setMaxRadius(spread);
+            ImGui::SliderFloat("Beam spread (at 0.2 s)", &spread, 0.02f, 0.6f);
             ImGui::SliderFloat("Flow speed", &flowSpeed, 0.0f, 2.0f);
             ImGui::SliderFloat("Pulse width", &beamWidth, 0.005f, 0.2f);
             ImGui::Checkbox("Sound", &soundOn);
             ImGui::SameLine();
+            ImGui::Checkbox("Bloom", &bloomOn);
+            ImGui::SliderFloat("Bloom strength", &bloomStrength, 0.0f, 3.0f);
+            ImGui::SliderFloat("Bloom threshold", &bloomThreshold, 0.05f, 1.5f);
+            ImGui::SliderInt("Bloom size", &bloomSize, 1, 16);
             ImGui::Checkbox("Stars", &showStars);
             if (ImGui::Button("Reset camera")) {
                 camera.yaw = 0.0f;
