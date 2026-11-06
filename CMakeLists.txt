@@ -42,3 +42,18 @@ if(APPLE)
 endif()
 # Link the libraries to the executable
 target_link_libraries(PulsarSim glfw glad imgui OpenGL::GL glm::glm)
+
+# --- Tests (Catch2) ---
+include(FetchContent)
+FetchContent_Declare(
+    Catch2
+    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_TAG v3.5.2
+)
+FetchContent_MakeAvailable(Catch2)
+
+enable_testing()
+add_executable(pulsar_tests tests/test_pulsar.cpp src/Pulsar.cpp)
+target_include_directories(pulsar_tests PRIVATE src)
+target_link_libraries(pulsar_tests PRIVATE Catch2::Catch2WithMain glm::glm)
+add_test(NAME pulsar_tests COMMAND pulsar_tests)
