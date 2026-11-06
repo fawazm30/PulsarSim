@@ -35,9 +35,11 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     }
 }
 
+// SLIDERS: ignore clicks/scrolls that land on the ImGui window
 void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
-    if (button == GLFW_MOUSE_BUTTON_LEFT)
-        mouseDown = (action == GLFW_PRESS);
+    if (button != GLFW_MOUSE_BUTTON_LEFT) return;
+    if (action == GLFW_RELEASE) { mouseDown = false; return; }
+    if (!ImGui::GetIO().WantCaptureMouse) mouseDown = true;
 }
 
 void cursorCallback(GLFWwindow* window, double x, double y) {
@@ -49,6 +51,7 @@ void cursorCallback(GLFWwindow* window, double x, double y) {
 }
 
 void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+    if (ImGui::GetIO().WantCaptureMouse) return; // SLIDERS
     camera.zoom((float)yoffset * -0.5f);
 }
 
@@ -63,7 +66,7 @@ int main(void) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(640, 480, "Pulsar Simulation", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(1000, 700, "Pulsar Simulation", NULL, NULL); // SLIDERS: bigger window
     if (!window) {
         glfwTerminate();
         exit(EXIT_FAILURE);
@@ -94,12 +97,20 @@ int main(void) {
     PulseAudio audio;
     audio.init();
 
-    // spin axis, tilt (degrees), period (seconds), period derivative
-    Pulsar pulsar(glm::vec3(0, 1, 0), 3.0f, 0.1, 1e-15, 1e10);
-    // Sphere for the star
+    // SLIDERS: adjustable values, shown/edited in the Controls panel
+    float tiltDeg = 3.0f;
+    float periodSet = 0.2f;
+    float bend = 0.5f;
+    float spread = 0.25f;
+    float flowSpeed = 0.4f;
+    float beamWidth = 0.02f; // light-curve pulse width (radians)
+    bool soundOn = true;
+
+    // spin axis, tilt (degrees), period (seconds), period derivative, time scale
+    Pulsar pulsar(glm::vec3(0, 1, 0), tiltDeg, periodSet, 1e-15, 1e10);
     Sphere star(0.12f, 24);
     // length, maxRadius, particle count, bend amount
-    BeamParticles beamParticles(3.0f, 0.25f, 1500, 0.10f);
+    BeamParticles beamParticles(3.0f, spread, 1500, bend);
 
     Shader shader("src/shaders/basic.vert", "src/shaders/basic.frag");
     Shader particleShader("src/shaders/particle.vert", "src/shaders/particle.frag");
@@ -108,13 +119,12 @@ int main(void) {
 
     float prevPhase = 0.0f; // used to detect one full rotation (audio tick)
 
-    // LIGHT CURVE: ring buffer of brightness samples, sampled at 1000 Hz
+    // Light curve: ring buffer of brightness samples, sampled at 1000 Hz
     const int kSamples = 600;           // 0.6 s of history
     float lightCurve[kSamples] = {0};
     int lightOffset = 0;                // next slot to write
     float sampleAcc = 0.0f;             // leftover time since the last sample
     const float sampleDt = 0.001f;      // seconds between samples
-    const float beamWidth = 0.02f;      // angular width of the beam in radians (tweak: bigger = wider pulse)
 
     while (!glfwWindowShouldClose(window)) {
         auto currentTime = std::chrono::high_resolution_clock::now();
@@ -124,9 +134,9 @@ int main(void) {
         pulsar.update(dt);
         glm::vec3 beam = pulsar.getBeamDirection();
 
-        beamParticles.update(dt, 0.4f); // flow speed
+        beamParticles.update(dt, flowSpeed); // SLIDERS: flow speed from slider
 
-        // LIGHT CURVE: fill in samples for this frame.
+        // Light curve: fill in samples for this frame.
         // Earth sits where the beam passes at phase 0, so the dot product
         // between beam and Earth is cos^2(a) + sin^2(a) * cos(phase).
         {
@@ -155,7 +165,7 @@ int main(void) {
         // Tick once per rotation (phase wraps back to 0), from any camera angle.
         // Quiet in the background, louder when a beam points toward the camera.
         float phase = pulsar.getPhase();
-        if (phase < prevPhase)
+        if (soundOn && phase < prevPhase) // SLIDERS: sound toggle
             audio.trigger(0.35f + 0.65f * pulseFactor);
         prevPhase = phase;
 
@@ -225,6 +235,7 @@ int main(void) {
         double B = 3.2e19 * std::sqrt(P * Pdot);        // surface magnetic field, gauss
         double ageYears = (P / (2.0 * Pdot)) / 3.15e7;  // characteristic age, years
 
+        ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
         ImGui::Begin("Pulsar Data");
         ImGui::Text("Period:         %.6f s", P);
         ImGui::Text("Frequency:      %.3f Hz", freq);
@@ -233,10 +244,31 @@ int main(void) {
         ImGui::Text("Char. age:      %.3e yr", ageYears);
         ImGui::Text("Pulse:          %.2f", pulseFactor);
         ImGui::Separator();
-        // LIGHT CURVE: brightness seen from Earth over the last 0.6 s
         ImGui::Text("Light curve (Earth view)");
         ImGui::PlotLines("##lightcurve", lightCurve, kSamples, lightOffset,
                          nullptr, 0.0f, 1.0f, ImVec2(320, 80));
+
+        // SLIDERS: live controls
+        if (ImGui::CollapsingHeader("Controls", ImGuiTreeNodeFlags_DefaultOpen)) {
+            if (ImGui::SliderFloat("Tilt (deg)", &tiltDeg, 0.5f, 60.0f))
+                pulsar.setTiltDegrees(tiltDeg);
+            if (ImGui::SliderFloat("Period (s)", &periodSet, 0.05f, 2.0f, "%.3f",
+                                   ImGuiSliderFlags_Logarithmic))
+                pulsar.setPeriod(periodSet);
+            if (ImGui::SliderFloat("Bend", &bend, 0.0f, 1.5f))
+                beamParticles.setBend(bend);
+            if (ImGui::SliderFloat("Beam spread", &spread, 0.02f, 0.6f))
+                beamParticles.setMaxRadius(spread);
+            ImGui::SliderFloat("Flow speed", &flowSpeed, 0.0f, 2.0f);
+            ImGui::SliderFloat("Pulse width", &beamWidth, 0.005f, 0.2f);
+            ImGui::Checkbox("Sound", &soundOn);
+            ImGui::SameLine();
+            if (ImGui::Button("Reset camera")) {
+                camera.yaw = 0.0f;
+                camera.pitch = 30.0f;
+                camera.distance = 5.0f;
+            }
+        }
         ImGui::End();
 
         ImGui::Render();

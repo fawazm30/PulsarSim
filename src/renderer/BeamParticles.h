@@ -6,6 +6,8 @@ public:
     BeamParticles(float length, float maxRadius, int count, float bendAmount);
     void update(float dt, float speed);
     void draw() const;
+    void setBend(float b) { bendAmount = b; }
+    void setMaxRadius(float r) { maxRadius = r; }
 
 private:
     unsigned int VAO, VBO;

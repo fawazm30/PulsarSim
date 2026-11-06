@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <cmath>
 
-static float randf() { return (float)rand() / RAND_MAX; }
+static float randf() { return (float)rand() / (float)RAND_MAX; }
 
 BeamParticles::BeamParticles(float length_, float maxRadius_, int count, float bendAmount_)
     : length(length_), maxRadius(maxRadius_), bendAmount(bendAmount_)

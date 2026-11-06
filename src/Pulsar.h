@@ -15,6 +15,8 @@ public:
     glm::vec3 getSpinAxis() const { return spinAxis; }
     float getTiltAngle() const { return tiltAngle; }
     double getPeriodDerivative() const { return periodDerivative; }
+    void setTiltDegrees(float degrees) { tiltAngle = glm::radians(degrees); }
+    void setPeriod(double seconds) { period = seconds; }
 
 private:
     glm::vec3 spinAxis;
