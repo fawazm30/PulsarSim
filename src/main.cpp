@@ -9,10 +9,11 @@
 #include "renderer/Camera.hpp"
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include "renderer/Sphere.h"
-#include "renderer/BeamParticles.h"
-#include "audio/PulseAudio.h"
-#include "imgui.h"
+#include "renderer/Sphere.h" // SPHERE
+#include "renderer/BeamParticles.h" // BEAM PARTICLES
+#include "renderer/Starfield.h" // STARS
+#include "audio/PulseAudio.h" // AUDIO
+#include "imgui.h" // IMGUI
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
@@ -35,7 +36,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     }
 }
 
-// SLIDERS: ignore clicks/scrolls that land on the ImGui window
+// Ignore clicks/scrolls that land on the ImGui window
 void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
     if (button != GLFW_MOUSE_BUTTON_LEFT) return;
     if (action == GLFW_RELEASE) { mouseDown = false; return; }
@@ -51,7 +52,7 @@ void cursorCallback(GLFWwindow* window, double x, double y) {
 }
 
 void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
-    if (ImGui::GetIO().WantCaptureMouse) return; // SLIDERS
+    if (ImGui::GetIO().WantCaptureMouse) return;
     camera.zoom((float)yoffset * -0.5f);
 }
 
@@ -66,7 +67,7 @@ int main(void) {
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(1000, 700, "Pulsar Simulation", NULL, NULL); // SLIDERS: bigger window
+    GLFWwindow* window = glfwCreateWindow(1000, 700, "Pulsar Simulation", NULL, NULL);
     if (!window) {
         glfwTerminate();
         exit(EXIT_FAILURE);
@@ -97,23 +98,26 @@ int main(void) {
     PulseAudio audio;
     audio.init();
 
-    // SLIDERS: adjustable values, shown/edited in the Controls panel
+    // Adjustable values, shown/edited in the Controls panel
     float tiltDeg = 3.0f;
-    float periodSet = 0.2f;
-    float bend = 0.5f;
+    float periodSet = 0.1f;
+    float bend = 0.0f;
     float spread = 0.25f;
-    float flowSpeed = 0.4f;
+    float flowSpeed = 0.4f; // speed of particles along the beam
     float beamWidth = 0.02f; // light-curve pulse width (radians)
     bool soundOn = true;
+    bool showStars = true;
 
     // spin axis, tilt (degrees), period (seconds), period derivative, time scale
     Pulsar pulsar(glm::vec3(0, 1, 0), tiltDeg, periodSet, 1e-15, 1e10);
     Sphere star(0.12f, 24);
     // length, maxRadius, particle count, bend amount
     BeamParticles beamParticles(3.0f, spread, 1500, bend);
+    Starfield starfield(3000);
 
     Shader shader("src/shaders/basic.vert", "src/shaders/basic.frag");
     Shader particleShader("src/shaders/particle.vert", "src/shaders/particle.frag");
+    Shader starShader("src/shaders/star.vert", "src/shaders/star.frag");
 
     auto lastTime = std::chrono::high_resolution_clock::now();
 
@@ -134,7 +138,7 @@ int main(void) {
         pulsar.update(dt);
         glm::vec3 beam = pulsar.getBeamDirection();
 
-        beamParticles.update(dt, flowSpeed); // SLIDERS: flow speed from slider
+        beamParticles.update(dt, flowSpeed);
 
         // Light curve: fill in samples for this frame.
         // Earth sits where the beam passes at phase 0, so the dot product
@@ -165,7 +169,7 @@ int main(void) {
         // Tick once per rotation (phase wraps back to 0), from any camera angle.
         // Quiet in the background, louder when a beam points toward the camera.
         float phase = pulsar.getPhase();
-        if (soundOn && phase < prevPhase) // SLIDERS: sound toggle
+        if (soundOn && phase < prevPhase)
             audio.trigger(0.35f + 0.65f * pulseFactor);
         prevPhase = phase;
 
@@ -176,6 +180,17 @@ int main(void) {
         glfwGetFramebufferSize(window, &w, &h);
         glm::mat4 view = camera.getView();
         glm::mat4 projection = camera.getProjection((float)w / h);
+
+        // draw first (behind everything). Strip the camera's translation from the
+        // view matrix so stars behave as if infinitely far away.
+        if (showStars) {
+            starShader.use();
+            glm::mat4 skyView = glm::mat4(glm::mat3(view));
+            glUniformMatrix4fv(glGetUniformLocation(starShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(skyView));
+            glUniformMatrix4fv(glGetUniformLocation(starShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+            glUniform1f(glGetUniformLocation(starShader.ID, "time"), (float)glfwGetTime());
+            starfield.draw();
+        }
 
         // --- Star: white core + pulsing blue halo ---
         shader.use();
@@ -248,7 +263,6 @@ int main(void) {
         ImGui::PlotLines("##lightcurve", lightCurve, kSamples, lightOffset,
                          nullptr, 0.0f, 1.0f, ImVec2(320, 80));
 
-        // SLIDERS: live controls
         if (ImGui::CollapsingHeader("Controls", ImGuiTreeNodeFlags_DefaultOpen)) {
             if (ImGui::SliderFloat("Tilt (deg)", &tiltDeg, 0.5f, 60.0f))
                 pulsar.setTiltDegrees(tiltDeg);
@@ -263,6 +277,7 @@ int main(void) {
             ImGui::SliderFloat("Pulse width", &beamWidth, 0.005f, 0.2f);
             ImGui::Checkbox("Sound", &soundOn);
             ImGui::SameLine();
+            ImGui::Checkbox("Stars", &showStars);
             if (ImGui::Button("Reset camera")) {
                 camera.yaw = 0.0f;
                 camera.pitch = 30.0f;
