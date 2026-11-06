@@ -67,11 +67,16 @@ Compare against the [ATNF Pulsar Catalogue](https://www.atnf.csiro.au/research/p
 | Controls panel | Preset, tilt, period (Custom only), playback speed, bend, beam spread, flow speed, pulse width, sound, bloom, stars |
 
 ## Build and run (macOS)
+_Tested in CI on Ubuntu and macOS. Windows is untested._
 
 Requirements: CMake, a C++17 compiler, GLFW, GLM.
 
 ```bash
+# macOS
 brew install cmake glfw glm
+
+# Ubuntu/Debian
+sudo apt install build-essential cmake libglfw3-dev libglm-dev xorg-dev libgl1-mesa-dev
 
 # Dear ImGui (not committed to this repo)
 git clone https://github.com/ocornut/imgui.git external/imgui
