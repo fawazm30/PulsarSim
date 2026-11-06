@@ -3,9 +3,10 @@
 
 A real-time pulsar simulation written in C++17 with raw OpenGL 4.1. It models a rotating neutron star with a tilted magnetic dipole, two beams of particles, spin-down, a live light curve, and pulse audio.
 
-> **Demo:** _add your GIF or video link here_
->
-> ![PulsarSim demo](docs/demo.gif)
+### Demo (Gif and Video)
+><img width="800" height="607" alt="pulsar_sim_2" src="https://github.com/user-attachments/assets/aa99e206-b13a-4769-abf7-ad0ab9ab6aec" />
+
+https://github.com/user-attachments/assets/3385041c-d481-4f8b-af68-85222c67ef73
 
 ## Features
 
