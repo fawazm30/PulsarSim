@@ -1,4 +1,5 @@
 # PulsarSim
+![CI](https://github.com/fawazm30/PulsarSim/actions/workflows/ci.yml/badge.svg)
 
 A real-time pulsar simulation written in C++17 with raw OpenGL 4.1. It models a rotating neutron star with a tilted magnetic dipole, two beams of particles, spin-down, a live light curve, and pulse audio.
 
